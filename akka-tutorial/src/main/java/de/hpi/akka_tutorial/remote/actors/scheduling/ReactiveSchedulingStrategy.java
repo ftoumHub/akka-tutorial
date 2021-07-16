@@ -60,15 +60,17 @@ public class ReactiveSchedulingStrategy implements SchedulingStrategy {
 		 * @return {@code true}, if work was assigned and {@code false} otherwise
 		 */
 		boolean assignWork(ActorRef worker, ActorRef master) {
-
 			// Select a failed subquery if any
 			Worker.ValidationMessage subquery = this.failedSubqueries.poll();
 			
 			// Create a new subquery if no failed subquery was selected
 			if (subquery == null) {
-				long subqueryRangeSize = Math.min(this.remainingRangeEndNumber - this.remainingRangeStartNumber + 1, MAX_SUBQUERY_RANGE_SIZE);
+				long subqueryRangeSize =
+						Math.min(this.remainingRangeEndNumber - this.remainingRangeStartNumber + 1, MAX_SUBQUERY_RANGE_SIZE);
 				if (subqueryRangeSize > 0) {
-					subquery = new Worker.ValidationMessage(this.id,this.remainingRangeStartNumber, this.remainingRangeStartNumber + subqueryRangeSize - 1);
+					subquery = new Worker.ValidationMessage(this.id,
+							this.remainingRangeStartNumber,
+							this.remainingRangeStartNumber + subqueryRangeSize - 1);
 					this.remainingRangeStartNumber += subqueryRangeSize;
 				}
 			}
@@ -119,8 +121,8 @@ public class ReactiveSchedulingStrategy implements SchedulingStrategy {
 		}
 	}
 
-
-	// A mapping of pending range queries to the query tracker that watches the progress of each range query; the queries are kept in their insertion order
+	// A mapping of pending range queries to the query tracker that watches
+	// the progress of each range query; the queries are kept in their insertion order
 	private final LinkedHashMap<Integer, QueryTracker> queryId2tracker = new LinkedHashMap<>();
 
 	// A mapping of known works to their current task
@@ -135,7 +137,7 @@ public class ReactiveSchedulingStrategy implements SchedulingStrategy {
 
 	@Override
 	public void schedule(final int taskId, final long startNumber, final long endNumber) {
-		System.out.println("==> ReactiveSchedulingStrategy.schedule");
+		//System.out.println("==> ReactiveSchedulingStrategy.schedule");
 		// Create a new tracker for the query
 		QueryTracker tracker = new QueryTracker(taskId, startNumber, endNumber);
 		this.queryId2tracker.put(tracker.id, tracker);
@@ -171,7 +173,7 @@ public class ReactiveSchedulingStrategy implements SchedulingStrategy {
 
 	@Override
 	public void addWorker(final ActorRef worker) {
-		System.out.println("==> addWorker");
+		//System.out.println("==> addWorker");
 		// Add the new worker
 		this.worker2tracker.put(worker, null);
 
@@ -195,7 +197,6 @@ public class ReactiveSchedulingStrategy implements SchedulingStrategy {
 	}
 
 	private void assignSubqueries() {
-		System.out.println("==> assignSubqueries");
 		// Collect all currently idle workers
 		Collection<ActorRef> idleWorkers = this.worker2tracker.entrySet().stream()
 				.filter(e -> e.getValue() == null)

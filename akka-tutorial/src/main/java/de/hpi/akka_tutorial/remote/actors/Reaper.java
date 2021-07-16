@@ -69,7 +69,6 @@ public class Reaper extends AbstractLoggingActor {
 	}
 
 	private void handle(WatchMeMessage message) {
-		
 		// Find the sender of this message
 		final ActorRef sender = this.getSender();
 		
@@ -81,11 +80,11 @@ public class Reaper extends AbstractLoggingActor {
 	}
 
 	private void handle(Terminated message) {
-		
 		// Find the sender of this message
 		final ActorRef sender = this.getSender();
 		
-		// Remove the sender from the watch list reaping its soul and terminate the entire actor system if this was its last actor
+		// Remove the sender from the watch list reaping its soul
+		// and terminate the entire actor system if this was its last actor
 		if (this.watchees.remove(sender)) {
 			this.log().info("Reaping {}.", sender);
 			if (this.watchees.isEmpty()) {

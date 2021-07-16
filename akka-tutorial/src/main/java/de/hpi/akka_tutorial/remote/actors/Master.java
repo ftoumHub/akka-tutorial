@@ -169,7 +169,7 @@ public class Master extends AbstractLoggingActor {
 	 * @param numLocalWorkers number of workers that this master should start locally
 	 */
 	public Master(final ActorRef listener, SchedulingStrategy.Factory schedulingStrategyFactory, int numLocalWorkers) {
-		System.out.println("<<create>> Master actor");
+		//System.out.println("<<create>> Master actor");
 
 		this.listener = listener;
 		this.schedulingStrategy = schedulingStrategyFactory.create(this.getSelf());

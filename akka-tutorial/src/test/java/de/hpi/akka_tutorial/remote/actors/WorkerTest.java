@@ -10,6 +10,8 @@ import scala.concurrent.duration.Duration;
 
 import java.util.Arrays;
 
+import static java.util.Arrays.asList;
+
 /**
  * This class contains tests for {@link Worker}s.
  */
@@ -32,7 +34,7 @@ public class WorkerTest {
 			worker.tell(new Worker.ValidationMessage(0, 1, 10), this.getRef());
 
 			// Expect the correct response.
-			Master.PrimesMessage expectedMsg = new Master.PrimesMessage(0, Arrays.asList(2L, 3L, 5L, 7L), true);
+			Master.PrimesMessage expectedMsg = new Master.PrimesMessage(0, asList(2L, 3L, 5L, 7L), true);
 			this.expectMsg(Duration.create(3, "secs"), expectedMsg);
 		}};
 	}
@@ -47,7 +49,7 @@ public class WorkerTest {
 			worker.tell(new Worker.ValidationMessage(1, 5, 11), this.getRef());
 
 			// Expect the correct response.
-			Master.PrimesMessage expectedMsg = new Master.PrimesMessage(1, Arrays.asList(5L, 7L, 11L), true);
+			Master.PrimesMessage expectedMsg = new Master.PrimesMessage(1, asList(5L, 7L, 11L), true);
 			this.expectMsg(Duration.create(3, "secs"), expectedMsg);
 		}};
 	}

@@ -152,7 +152,6 @@ public class Main {
      * This class defines shared parameters across masters and slaves.
      */
     abstract static class CommandBase {
-
         // Defines the address that we want to bind the Akka remoting interface to.
         @Parameter(names = {"-h", "--host"}, description = "host/IP to bind against")
         String host = this.getDefaultHost();

@@ -15,6 +15,8 @@ import de.hpi.akka_tutorial.remote.messages.ShutdownMessage;
 import scala.concurrent.ExecutionContextExecutor;
 import scala.concurrent.duration.Duration;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 /**
  * The slave actor tries to subscribe its actor system to a shepherd actor in a master actor system.
  */
@@ -51,9 +53,7 @@ public class Slave extends AbstractLoggingActor {
 	 * Asks the {@link Slave} to acknowledge a successful connection request with a (remote) {@link Shepherd} actor.
 	 */
 	public static class AcknowledgementMessage implements Serializable {
-
 		private static final long serialVersionUID = 2289467879887081348L;
-
 	}
 
 	// A scheduling item to keep on trying to reconnect as regularly
@@ -90,7 +90,6 @@ public class Slave extends AbstractLoggingActor {
 	}
 
 	private void handle(ShutdownMessage message) {
-
 		// Log remote shutdown message
 		this.log().info("Was asked to stop.");
 
@@ -99,7 +98,6 @@ public class Slave extends AbstractLoggingActor {
 	}
 
 	private void handle(AddressMessage message) {
-		
 		// Cancel any running connect schedule, because got a new address
 		if (this.connectSchedule != null) {
 			this.connectSchedule.cancel();
@@ -107,21 +105,22 @@ public class Slave extends AbstractLoggingActor {
 		}
 
 		// Find the shepherd actor in the remote actor system
-		final ActorSelection selection = this.getContext().getSystem().actorSelection(String.format("%s/user/%s", message.address, Shepherd.DEFAULT_NAME));
+		final ActorSelection selection = this.getContext().getSystem().actorSelection(
+				String.format("%s/user/%s", message.address, Shepherd.DEFAULT_NAME));
 
-		// Register the local actor system by periodically sending subscription messages (until an acknowledgement was received)
+		// Register the local actor system by periodically sending subscription messages
+		// (until an acknowledgement was received)
 		final Scheduler scheduler = this.getContext().getSystem().scheduler();
 		final ExecutionContextExecutor dispatcher = this.getContext().getSystem().dispatcher();
 		this.connectSchedule = scheduler.schedule(
 				Duration.Zero(),
-				Duration.create(5, TimeUnit.SECONDS),
+				Duration.create(5, SECONDS),
 				() -> selection.tell(new Shepherd.SubscriptionMessage(), this.getSelf()),
 				dispatcher
 		);
 	}
 
 	private void handle(AcknowledgementMessage message) {
-		
 		// Cancel any running connect schedule, because we are now connected
 		if (this.connectSchedule != null) {
 			this.connectSchedule.cancel();
@@ -133,8 +132,8 @@ public class Slave extends AbstractLoggingActor {
 	}
 
 	private void handle(DisassociatedEvent event) {
-		
-		// Disassociations are a problem only once we have a running connection, i.e., no connection schedule is active; they do not concern this actor otherwise.
+		// Disassociations are a problem only once we have a running connection, i.e.,
+		// no connection schedule is active; they do not concern this actor otherwise.
 		if (this.connectSchedule == null) {
 			this.log().error("Disassociated from master. Stopping...");
 			this.getContext().stop(this.getSelf());
