@@ -2,6 +2,7 @@ package de.hpi.akka_tutorial.remote.actors;
 
 import static akka.actor.SupervisorStrategy.escalate;
 import static akka.actor.SupervisorStrategy.stop;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.io.Serializable;
 import java.util.List;
@@ -34,8 +35,7 @@ public class Master extends AbstractLoggingActor {
 	public static Props props(final ActorRef listener,
 							  SchedulingStrategy.Factory schedulingStrategyFactory,
 							  final int numLocalWorkers) {
-		return Props.create(Master.class,
-				() -> new Master(listener, schedulingStrategyFactory, numLocalWorkers));
+		return Props.create(Master.class, () -> new Master(listener, schedulingStrategyFactory, numLocalWorkers));
 	}
 
 	/**
@@ -143,11 +143,13 @@ public class Master extends AbstractLoggingActor {
 	}
 
 	// The supervisor strategy for the worker actors created by this master actor
-	private static SupervisorStrategy strategy =
-			new OneForOneStrategy(0, Duration.create(1, TimeUnit.SECONDS), DeciderBuilder
-					.match(Exception.class, e -> stop())
-					.matchAny(o -> escalate())
-					.build());
+	private static SupervisorStrategy strategy = new OneForOneStrategy(
+	        0,
+                    Duration.create(1, SECONDS),
+                    DeciderBuilder.match(Exception.class, e -> stop())
+                            .matchAny(o -> escalate())
+                            .build()
+    );
 
 	// A reference to the listener actor that collects all calculated prime numbers
 	private final ActorRef listener;
@@ -176,12 +178,10 @@ public class Master extends AbstractLoggingActor {
 		
 		// Start the specified number of local workers
 		for (int i = 0; i < numLocalWorkers; i++) {
-			// Create a new worker
-			ActorRef worker = this.getContext().actorOf(Worker.props());
+			ActorRef worker = this.getContext().actorOf(Worker.props()); // Create a new worker
 			this.schedulingStrategy.addWorker(worker);
 
-			// Add the worker to the watch list and our router
-			this.getContext().watch(worker);
+			this.getContext().watch(worker); // Add the worker to the watch list and our router
 		}
 	}
 
@@ -200,8 +200,7 @@ public class Master extends AbstractLoggingActor {
 		
 		// If the master has stopped, it can also stop the listener
 		this.listener.tell(PoisonPill.getInstance(), this.getSelf());
-		
-		// Log the stop event
+
 		this.log().info("Stopped {}.", this.getSelf());
 	}
 
@@ -218,21 +217,19 @@ public class Master extends AbstractLoggingActor {
 				.match(PrimesMessage.class, this::handle)
 				.match(ShutdownMessage.class, this::handle)
 				.match(Terminated.class, this::handle)
-				.matchAny(object ->
-						this.log().info(this.getClass().getName() + " received unknown message: " + object.toString()))
+				.matchAny(__ ->
+						this.log().info(this.getClass().getName() + " received unknown message: " + __.toString()))
 				.build();
 	}
 
 	private void handle(RemoteSystemMessage message) {
 		// Create a new worker with the given URI
-		ActorRef worker = this.getContext().actorOf(Worker.props()
-				.withDeploy(new Deploy(new RemoteScope(message.remoteAddress))));
-		
-		// Add worker to the scheduler
-		this.schedulingStrategy.addWorker(worker);
+        final Props workerProps = Worker.props().withDeploy(new Deploy(new RemoteScope(message.remoteAddress)));
+        ActorRef worker = this.getContext().actorOf(workerProps);
 
-		// Add the worker to the watch list
-		this.getContext().watch(worker);
+		this.schedulingStrategy.addWorker(worker); // Add worker to the scheduler
+
+		this.getContext().watch(worker); // Add the worker to the watch list
 
 		this.log().info("New worker: " + worker);
 	}
